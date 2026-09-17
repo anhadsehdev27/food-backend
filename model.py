@@ -5,11 +5,14 @@ from sqlalchemy import Column,Text, Integer, String, DateTime, Boolean,JSON,Nume
 class Users(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    full_name = Column(String, index=True)
-    email = Column(String, index=True)
-    mobile_no = Column(String, index=True)
-    password_hash = Column(String, index=True)
+    id = Column(Integer, primary_key=True)
+    full_name = Column(String(255))
+    email = Column(String(255), unique=True)
+    mobile_no = Column(String(20))
+    password_hash = Column(String)
+    role_id=Column(Integer, ForeignKey("role.id"))
+
+   
 
 class Item(Base):
     __tablename__ = "item"
@@ -23,6 +26,7 @@ class Item(Base):
     status = Column(Integer, index=True)
     created_at = Column(DateTime )
     updated_at = Column(DateTime )
+
 
 class Menu(Base):
     __tablename__ = "menu"
@@ -63,6 +67,7 @@ class Restaurant_Menu(Base):
 
 
 
+
 class Orders(Base):
     __tablename__ = "orders"
 
@@ -81,7 +86,7 @@ class Order_Item(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     order_id = Column(Integer,ForeignKey("orders.id"),nullable=False)
     restaurant_menu_id = Column(Integer, nullable=False)
-    item_name = Column(Integer,ForeignKey("item.id"), index=True)
+    item_id = Column(Integer, ForeignKey("item.id"), nullable=False)
     quantity = Column(Integer, index=True)
     unit_price = Column(Numeric(10,2), index=True)
     total_price = Column(Numeric(10,2), index=True)
@@ -98,3 +103,20 @@ class Payment(Base):
     gateway_response = Column(JSON)
     paid_at = Column(DateTime , index=True)
     created_at = Column(DateTime , index=True)
+
+class Role(Base):
+    __tablename__ = "role"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    role_name = Column(
+        String,
+        nullable=False,
+        unique=True
+    )
+
+

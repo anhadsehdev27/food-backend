@@ -13,7 +13,7 @@ app = FastAPI()
 create_table()
 
 origins = [
-    "http://localhost:5173",
+    "http://localhost:5173","http://localhost:5177"
 ]
 
 app.add_middleware(
@@ -23,7 +23,37 @@ app.add_middleware(
     allow_methods=["*"],              # Allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],              # Allows all request headers
 )
+#login
 
+@app.post("/login")
+def login(data: schemas.Login, db: Session = Depends(get_db)):
+    print("LOGIN API HIT")
+
+    user = services.login_user(
+        db,
+        data.email,
+        data.password
+    )
+
+    print("Returned user:", user)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
+
+    return {
+    "message": "Login Successful",
+    "user": {
+        "id": user.id,
+        "full_name": user.full_name,
+        "email": user.email,
+        "role_id": user.role_id
+    }
+}
+
+    
 #users
 
 @app.post("/users", response_model=schemas.User)
@@ -461,3 +491,86 @@ def update_payment_status(
         )
 
     return updated
+
+
+# ============================
+# ROLE
+# ============================
+
+@app.post("/role", response_model=schemas.Role)
+def add_role(
+    role: schemas.RoleCreate,
+    db: Session = Depends(get_db)
+):
+    return services.create_role(db, role)
+
+
+@app.get("/role", response_model=list[schemas.Role])
+def get_all_roles(
+    db: Session = Depends(get_db)
+):
+    return services.get_roles(db)
+
+
+@app.get("/role/{role_id}", response_model=schemas.Role)
+def get_role(
+    role_id: int,
+    db: Session = Depends(get_db)
+):
+
+    role = services.get_role(
+        db,
+        role_id
+    )
+
+    if not role:
+        raise HTTPException(
+            status_code=404,
+            detail="Role not found"
+        )
+
+    return role
+
+
+@app.patch("/role/{role_id}", response_model=schemas.Role)
+def edit_role(
+    role_id: int,
+    role: schemas.RoleUpdate,
+    db: Session = Depends(get_db)
+):
+
+    updated = services.update_role(
+        db,
+        role_id,
+        role
+    )
+
+    if not updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Role not found"
+        )
+
+    return updated
+
+
+@app.delete("/role/{role_id}")
+def delete_role(
+    role_id: int,
+    db: Session = Depends(get_db)
+):
+
+    deleted = services.delete_role(
+        db,
+        role_id
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Role not found"
+        )
+
+    return {
+        "message": "Role Deleted"
+    }

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from model import ( Users , Menu, Item, Restaurant, Restaurant_Menu, Orders, Order_Item, Payment)
+from model import ( Users , Menu, Item, Restaurant, Restaurant_Menu, Orders, Order_Item, Payment,Role)
 from schemas import (
     UserCreate, UserUpdate,
     MenuCreate, MenuUpdate,
@@ -8,17 +8,49 @@ from schemas import (
     RestaurantMenuCreate, RestaurantMenuUpdate,
     OrderCreate, OrderUpdate,
     OrderItemCreate, OrderItemUpdate,
-    PaymentCreate, PaymentUpdate
+    PaymentCreate, PaymentUpdate,
+    RoleCreate, RoleUpdate
+    
 )
+from security import hash_password
+from security import verify_password
 
+def login_user(db: Session, email: str, password: str):
+    print("Email:", email)
+
+    user = db.query(Users).filter(Users.email == email).first()
+
+    print("User:", user)
+
+    if not user:
+        print("User not found")
+        return None
+
+    print("Stored Hash:", user.password_hash)
+
+    result = verify_password(password, user.password_hash)
+
+    print("Password Match:", result)
+
+    if not result:
+        return None
+
+    return user
 
 def create_user(db: Session, data: UserCreate):
-    user = Users(**data.model_dump())
+    user = Users(
+        full_name=data.full_name,
+        email=data.email,
+        mobile_no=data.mobile_no,
+        password_hash=hash_password(data.password),
+        role_id=data.role_id
+    )
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
 
+    return user
 
 def get_users(db: Session):
     return db.query(Users).all()
@@ -98,10 +130,21 @@ def create_item(db: Session, data: ItemCreate):
     db.refresh(item)
     return item
 
-
 def get_items(db: Session):
-    return db.query(Item).all()
-
+    return (
+        db.query(
+            Item.id,
+            Item.menu_id,
+            Item.item_name,
+            Item.description,
+            Item.image_url,
+            Item.is_veg,
+            Item.status,
+            Restaurant_Menu.price,
+            Restaurant_Menu.id.label("restaurant_menu_id")
+        )
+       
+    )
 
 def get_item(db: Session, item_id: int):
     return db.query(Item).filter(Item.id == item_id).first()
@@ -325,4 +368,61 @@ def delete_payment(db: Session, payment_id: int):
 
     db.delete(payment)
     db.commit()
+    return True
+
+# ============================
+# ROLE
+# ============================
+
+
+def create_role(db: Session, data: RoleCreate):
+
+    role = Role(
+        role_name=data.role_name
+    )
+
+    db.add(role)
+    db.commit()
+    db.refresh(role)
+
+    return role
+
+
+def get_roles(db: Session):
+
+    return db.query(Role).all()
+
+
+def get_role(db: Session, role_id: int):
+
+    return db.query(Role).filter(
+        Role.id == role_id
+    ).first()
+
+
+def update_role(db: Session, role_id: int, data: RoleUpdate):
+
+    role = get_role(db, role_id)
+
+    if not role:
+        return None
+
+    role.role_name = data.role_name
+
+    db.commit()
+    db.refresh(role)
+
+    return role
+
+
+def delete_role(db: Session, role_id: int):
+
+    role = get_role(db, role_id)
+
+    if not role:
+        return False
+
+    db.delete(role)
+    db.commit()
+
     return True

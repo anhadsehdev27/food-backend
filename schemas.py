@@ -8,22 +8,29 @@ class UsersBase(BaseModel):
     full_name: str
     email: str
     mobile_no: str
-    password_hash: str
 
 
 class UserCreate(UsersBase):
-    pass
+    password: str
+    role_id:int
 
-class UserUpdate(UsersBase):
-    pass
 
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    email: str | None = None
+    mobile_no: str | None = None
+    password: str | None = None
+    role_id: int | None = None
 
 class User(UsersBase):
     id: int
+    role_id:int
 
     class Config:
         from_attributes = True
-
+class Login(BaseModel):
+    email: str
+    password: str
 
 
 class MenuBase(BaseModel):
@@ -166,7 +173,7 @@ class Order(OrderBase):
 class OrderItemBase(BaseModel):
     order_id: int
     restaurant_menu_id: int
-    item_name: int
+    item_id: int
     quantity: int
     unit_price: float
     total_price: float
@@ -208,7 +215,29 @@ class PaymentUpdate(BaseModel):
 class Payment(PaymentBase):
     id: int
     paid_at: Optional[datetime] = None
+    
     created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+        
+
+
+
+class RoleBase(BaseModel):
+    role_name: str
+
+
+class RoleCreate(RoleBase):
+    pass
+
+
+class RoleUpdate(BaseModel):
+    role_name: str
+
+
+class Role(RoleBase):
+    id: int
 
     class Config:
         from_attributes = True
